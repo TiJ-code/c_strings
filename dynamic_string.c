@@ -2,6 +2,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
+static bool is_dynamic_string(const char *str) {
+	if (!str)
+		return false;
+
+	const string_t *s = CHAR_PTR_TO_STRING_T(str);
+
+	return s->magic == STRING_MAGIC;
+}
 
 char *new_string(const char *string) {
 	if (!string)
@@ -17,10 +27,11 @@ char *new_string(const char *string) {
 	if (!dyn_string)
 		return NULL;
 
+	dyn_string->magic    = STRING_MAGIC; 
 	dyn_string->length   = string_length;
 	dyn_string->capacity = string_length;
 
-	strcpy(dyn_string->buf, string);
+	memcpy(dyn_string->buf, string, string_length + 1);
 
 	return (char *)dyn_string->buf;
 }
@@ -40,7 +51,18 @@ void concat_target(char **target, const char *string) {
 
 	string_t *target_string = CHAR_PTR_TO_STRING_T(*target);
 
-	size_t append_len = strlen(string);
+	size_t append_len;
+	const char *src;
+
+	if (is_dynamic_string(string)) {
+		const string_t *s = CHAR_PTR_TO_STRING_T(string);
+		append_len = s->length;
+		src = s->buf;
+	} else {
+		append_len = strlen(string);
+		src = string;
+	}
+
 	size_t required = target_string->length + append_len;
 
 	if (required > target_string->capacity) {
@@ -64,11 +86,45 @@ void concat_target(char **target, const char *string) {
 	
 	memcpy(
 			target_string->buf + target_string->length,
-			string,
-			append_len + 1
+			src,
+			append_len
 	);
-
 	target_string->length += append_len;
+	target_string->buf[target_string->length] = 0;
 }
 
+char *concat(const char *a, const char *b) {
+	if (!a || !b)
+		return NULL;
+
+	size_t len_a;
+	size_t len_b;
+
+	if (is_dynamic_string(a))
+		len_a = CHAR_PTR_TO_STRING_T(a)->length;
+	else
+		len_a = strlen(a);
+
+	if (is_dynamic_string(b))
+		len_b = CHAR_PTR_TO_STRING_T(b)->length;
+	else
+		len_b = strlen(b);
+
+	size_t total = len_a + len_b;
+
+	string_t *result = malloc(sizeof(string_t) + total + 1);
+
+	if (!result)
+		return NULL;
+
+	result->magic = STRING_MAGIC;
+	result->length = total;
+	result->capacity = total;
+
+	memcpy(result->buf, a, len_a);
+	memcpy(result->buf + len_a, b, len_b);
+	result->buf[total] = 0;
+
+	return result->buf;
+}
 

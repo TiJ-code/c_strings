@@ -1,11 +1,16 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
-#define CHAR_PTR_TO_STRING_T(char_ptr__) \
-	((((string_t *)(char_ptr__))) - 1)
+#define STRING_MAGIC 0x53545247
+
+#define CHAR_PTR_TO_STRING_T(ptr) \
+	((string_t *)((char *)(ptr) - offsetof(string_t, buf)))
 
 typedef struct {
+	uint32_t magic;
 	size_t length;
 	size_t capacity;
 	char buf[];
@@ -17,3 +22,4 @@ void free_string(char *);
 
 void concat_target(char **target, const char *string);
 
+char *concat(const char *a, const char *b);

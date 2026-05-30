@@ -8,7 +8,9 @@ int main() {
 	concat_target(&string, ", World");
 	concat_target(&string, "!");
 
-	printf("%s\n", string);
+	char *new = concat(string, " What's up?");
+
+	printf("%s\n", new);
 
 	return 0;
 }
