@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
-TARGET = main
+TARGET = main.o
 
 SRC = $(wildcard *.c)
 
